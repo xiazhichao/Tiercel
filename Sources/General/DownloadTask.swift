@@ -173,7 +173,7 @@ extension DownloadTask {
         cache.createDirectory()
         guard let manager = manager else { return }
         switch status {
-        case .waiting, .suspended, .failed:
+        case .waiting, .suspended, .failed, .willSuspend:
             if cache.fileExists(fileName: fileName) {
                 prepareForDownload(fileExists: true)
             } else {
