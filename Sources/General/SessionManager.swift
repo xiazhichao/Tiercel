@@ -704,7 +704,9 @@ extension SessionManager {
                         has = true
                     }
                 }
-                if !has {
+                if !has,(taskModel.status != .succeeded ||
+                         taskModel.status != .removed  ||
+                         taskModel.status != .willRemove) {
                     taskModel.status = .failed
                     self.maintainTasks(with: .fail(taskModel))
                 }
