@@ -31,6 +31,7 @@ public class SessionManager {
     enum MaintainTasksAction {
         case append(DownloadTask)
         case remove(DownloadTask)
+        case fail(DownloadTask)
         case succeeded(DownloadTask)
         case appendRunningTasks(DownloadTask)
         case removeRunningTasks(DownloadTask)
@@ -630,6 +631,11 @@ extension SessionManager {
                 state.taskMapper[task.url.absoluteString] = task
                 state.urlMapper[task.currentURL] = task.url
             }
+        case let .fail(task):
+            protectedState.write { state in
+                state.taskMapper[task.url.absoluteString] = task
+                state.urlMapper[task.currentURL] = task.url
+            }
         case let .remove(task):
             protectedState.write { state in
                 if state.status == .willRemove {
@@ -683,16 +689,36 @@ extension SessionManager {
         }
         session?.getTasksWithCompletionHandler { [weak self] (dataTasks, uploadTasks, downloadTasks) in
             guard let self = self else { return }
-            downloadTasks.forEach { downloadTask in
-                if downloadTask.state == .running,
-                    let currentURL = downloadTask.currentRequest?.url,
-                    let task = self.mapTask(currentURL) {
-                    self.didStart()
-                    self.maintainTasks(with: .appendRunningTasks(task))
-                    task.status = .running
-                    task.sessionTask = downloadTask
+            for taskModel in tasks {
+                var has = false
+                for downloadTask in downloadTasks {
+                    if let currentURL = downloadTask.currentRequest?.url,
+                       let task = self.mapTask(currentURL),
+                       task.url == currentURL {
+                        if downloadTask.state == .running {
+                            self.didStart()
+                            self.maintainTasks(with: .appendRunningTasks(task))
+                            task.status = .running
+                            task.sessionTask = downloadTask
+                        }
+                        has = true
+                    }
+                }
+                if !has {
+                    taskModel.status = .failed
+                    self.maintainTasks(with: .fail(taskModel))
                 }
             }
+//            downloadTasks.forEach { downloadTask in
+//                if downloadTask.state == .running,
+//                    let currentURL = downloadTask.currentRequest?.url,
+//                    let task = self.mapTask(currentURL) {
+//                    self.didStart()
+//                    self.maintainTasks(with: .appendRunningTasks(task))
+//                    task.status = .running
+//                    task.sessionTask = downloadTask
+//                }
+//            }
             self.storeTasks()
             //  处理mananger状态
             if !self.shouldComplete() {
