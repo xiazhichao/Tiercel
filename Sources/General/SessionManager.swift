@@ -706,7 +706,7 @@ extension SessionManager {
                     }
                 }
                 if !has,taskModel.status == .running {
-                    self.didStart()
+                    self.start(taskModel)
                 }
             }
 //            downloadTasks.forEach { downloadTask in
