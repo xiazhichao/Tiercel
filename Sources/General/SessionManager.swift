@@ -705,11 +705,8 @@ extension SessionManager {
                         break
                     }
                 }
-                if !has,(taskModel.status != .succeeded ||
-                         taskModel.status != .removed  ||
-                         taskModel.status != .willRemove) {
-                    taskModel.status = .failed
-                    self.maintainTasks(with: .fail(taskModel))
+                if !has,taskModel.status == .running {
+                    self.didStart()
                 }
             }
 //            downloadTasks.forEach { downloadTask in
