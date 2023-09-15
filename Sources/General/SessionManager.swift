@@ -702,6 +702,7 @@ extension SessionManager {
                             task.sessionTask = downloadTask
                         }
                         has = true
+                        break
                     }
                 }
                 if !has,(taskModel.status != .succeeded ||
